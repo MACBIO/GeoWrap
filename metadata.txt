@@ -1,0 +1,39 @@
+# This file contains metadata for your plugin. Since 
+# version 2.0 of QGIS this is the proper way to supply 
+# information about a plugin. The old method of 
+# embedding metadata in __init__.py will 
+# is no longer supported since version 2.0.
+
+# This file should be included when you package your plugin.# Mandatory items:
+
+[general]
+name=Geometry Wrapper
+qgisMinimumVersion=2.0
+description=Converts geometry longitude from [-180,180] to [0,360]
+version=0.1
+author=Jonah Sullivan
+email=jonahsullivan79@gmail.com
+
+about=This plugin converts the longitude values of rasters or vectors from [-180,180] to [0,360]. This is useful if you want to display the Pacific Ocean.
+
+tracker=https://github.com/MACBIO/GeometryWrapper/issues
+repository=https://github.com/MACBIO/GeometryWrapper
+# End of mandatory metadata
+
+# Recommended items:
+
+# Uncomment the following line and add your changelog:
+# changelog=
+
+# Tags are comma separated with spaces allowed
+tags=geometry, vector, raster, shift
+
+homepage=https://github.com/MACBIO/GeometryWrapper
+category=Plugins
+icon=icon.png
+# experimental flag
+experimental=True
+
+# deprecated flag (applies to the whole plugin, not just a single version)
+deprecated=False
+
