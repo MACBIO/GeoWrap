@@ -9,15 +9,15 @@
 [general]
 name=Geometry Wrapper
 qgisMinimumVersion=2.0
-description=Converts geometry longitude from [-180,180] to [0,360]
+description=Converts geometry longitude from [-180,180] to [0,360] and vice versa
 version=0.1
 author=Jonah Sullivan
 email=jonahsullivan79@gmail.com
 
-about=This plugin converts the longitude values of rasters or vectors from [-180,180] to [0,360]. This is useful if you want to display the Pacific Ocean.
+about=This plugin converts the longitude values of rasters or vectors from [-180,180] to [0,360] and vice versa. This is useful if you want to display the Pacific Ocean.
 
-tracker=https://github.com/MACBIO/GeometryWrapper/issues
-repository=https://github.com/MACBIO/GeometryWrapper
+tracker=https://github.com/MACBIO/GeoWrap/issues
+repository=https://github.com/MACBIO/GeoWrap
 # End of mandatory metadata
 
 # Recommended items:
@@ -28,7 +28,7 @@ repository=https://github.com/MACBIO/GeometryWrapper
 # Tags are comma separated with spaces allowed
 tags=geometry, vector, raster, shift
 
-homepage=https://github.com/MACBIO/GeometryWrapper
+homepage=https://github.com/MACBIO/GeoWrap
 category=Plugins
 icon=icon.png
 # experimental flag

@@ -66,6 +66,10 @@ class GeometryWrapper:
         # TODO: We are going to let the user set this up in a future iteration
         self.toolbar = self.iface.addToolBar(u'GeometryWrapper')
         self.toolbar.setObjectName(u'GeometryWrapper')
+        
+        # listen for browse button 
+        self.dlg = GeometryWrapperDialog()
+        self.dlg.inButton.clicked.connect(self.setInDataset) 
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -134,7 +138,7 @@ class GeometryWrapper:
         """
 
         # Create the dialog (after translation) and keep reference
-        self.dlg = GeometryWrapperDialog()
+        #self.dlg = GeometryWrapperDialog()
 
         icon = QIcon(icon_path)
         action = QAction(icon, text, parent)
@@ -180,38 +184,32 @@ class GeometryWrapper:
         # remove the toolbar
         del self.toolbar
         
+        # display file dialog to select input dataset
+    def setInDataset(self):
+        inName = QFileDialog.getOpenFileName(None, 
+                                             'Select input dataset', 
+                                             '', 
+                                             "raster or vector (*.shp *.tif)",
+                                             )
+        if inName:
+            self.inDataset = QFileInfo(inName).absoluteFilePath()
+            self.dlg.inDataset.setText(QFileInfo(inName).absoluteFilePath())     
+
     def run(self):
         """Run method that performs all the real work"""
         # clear the indataset field
         self.inDataset = ''
         self.dlg.inDataset.clear()
-        
+
         # show the dialog
         self.dlg.show()
-        
-        # display file dialog to select input dataset
-        def setInDataset():
-            self.inDataset = ''
-            self.dlg.inDataset.clear()
-            inName = ''
-            inPath = ''
-            fileDialog = QFileDialog()
-            #fileDialog.setConfirmOverwrite(False)
-            inName = fileDialog.getSaveFileName(self.dlg, 'Select input dataset', '', "raster or vector (*.shp *.tif)", QFileDialog.DontConfirmOverwrite)
-            inPath = QFileInfo(inName).absoluteFilePath()
-            if inName:
-                self.inDataset = inPath
-                self.dlg.inDataset.setText(inPath)
-                
-        # select input file
-        self.dlg.inButton.clicked.connect(setInDataset) 
-        
-        # set up a message box
+
+        # set up an empty message box
         msg = QMessageBox()
         msg.setIcon(QMessageBox.Warning)
         msg.setWindowTitle("Geometry Wrapper")
         msg.setStandardButtons(QMessageBox.Ok)
-        
+
         # Run the dialog event loop
         result = self.dlg.exec_()
         # See if OK was pressed
