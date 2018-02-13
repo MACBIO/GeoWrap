@@ -30,6 +30,7 @@ import os
 import utils
 from qgis.core import QgsRasterLayer, QgsVectorLayer, QgsMapLayerRegistry 
 
+
 class GeometryWrapper:
     """QGIS Plugin Implementation."""
 
@@ -59,7 +60,6 @@ class GeometryWrapper:
             if qVersion() > '4.3.3':
                 QCoreApplication.installTranslator(self.translator)
 
-
         # Declare instance attributes
         self.actions = []
         self.menu = self.tr(u'&Geometry Wrapper')
@@ -85,7 +85,6 @@ class GeometryWrapper:
         """
         # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
         return QCoreApplication.translate('GeometryWrapper', message)
-
 
     def add_action(
         self,
@@ -138,7 +137,7 @@ class GeometryWrapper:
         """
 
         # Create the dialog (after translation) and keep reference
-        #self.dlg = GeometryWrapperDialog()
+        # self.dlg = GeometryWrapperDialog()
 
         icon = QIcon(icon_path)
         action = QAction(icon, text, parent)
@@ -172,7 +171,6 @@ class GeometryWrapper:
             text=self.tr(u'Geometry Wrapper'),
             callback=self.run,
             parent=self.iface.mainWindow())
-
 
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
