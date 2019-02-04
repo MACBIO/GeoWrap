@@ -20,15 +20,16 @@
  *                                                                         *
  ***************************************************************************/
 """
-from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QFileInfo
-from PyQt4.QtGui import QAction, QIcon, QFileDialog, QMessageBox
+from PyQt5.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QFileInfo
+from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import QAction, QFileDialog, QMessageBox
 # Initialize Qt resources from file resources.py
-import resources
+from .resources import *
 # Import the code for the dialog
 from geometry_wrapper_dialog import GeometryWrapperDialog
 import os
 import utils
-from qgis.core import QgsRasterLayer, QgsVectorLayer, QgsMapLayerRegistry 
+from qgis.core import QgsRasterLayer, QgsVectorLayer, QgsProject
 
 
 class GeometryWrapper:
@@ -69,7 +70,12 @@ class GeometryWrapper:
         
         # listen for browse button 
         self.dlg = GeometryWrapperDialog()
-        self.dlg.inButton.clicked.connect(self.setInDataset) 
+        self.dlg.inButton.clicked.connect(self.set_in_dataset)
+
+        self.inDataset = None
+        self.dataType = None
+        self.longitudeRange = None
+        self.outFile = None
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -183,20 +189,19 @@ class GeometryWrapper:
         del self.toolbar
         
         # display file dialog to select input dataset
-    def setInDataset(self):
-        inName = QFileDialog.getOpenFileName(None, 
-                                             'Select input dataset', 
-                                             '', 
-                                             "raster or vector (*.shp *.tif)",
-                                             )
-        if inName:
-            self.inDataset = QFileInfo(inName).absoluteFilePath()
-            self.dlg.inDataset.setText(QFileInfo(inName).absoluteFilePath())     
+    def set_in_dataset(self):
+        in_name = QFileDialog.getOpenFileName(None,
+                                              'Select input dataset',
+                                              '',
+                                              "raster or vector (*.shp *.tif)",
+                                              )
+        if in_name:
+            self.inDataset = QFileInfo(in_name).absoluteFilePath()
+            self.dlg.inDataset.setText(QFileInfo(in_name).absoluteFilePath())
 
     def run(self):
         """Run method that performs all the real work"""
         # clear the indataset field
-        self.inDataset = ''
         self.dlg.inDataset.clear()
 
         # show the dialog
@@ -214,11 +219,11 @@ class GeometryWrapper:
         if result:
             # get raster or vector file type
             self.dataType = ''
-            fileName = self.inDataset
-            fileInfo = QFileInfo(self.inDataset)
-            baseName = fileInfo.baseName()
-            rlayer = QgsRasterLayer(fileName, baseName)
-            vlayer = QgsVectorLayer(fileName, baseName, "ogr")
+            file_name = self.inDataset
+            file_info = QFileInfo(self.inDataset)
+            base_name = file_info.baseName()
+            rlayer = QgsRasterLayer(file_name, base_name)
+            vlayer = QgsVectorLayer(file_name, base_name, "ogr")
             if rlayer.isValid():
                 self.dataType = 'raster'
                 srs = rlayer.crs().authid()
@@ -254,12 +259,12 @@ class GeometryWrapper:
                     self.run()
                 else:
                     utils.processVector(self.inDataset, self.longitudeRange, self.outFile)
-                    fileInfo = QFileInfo(self.outFile)
-                    baseName = fileInfo.baseName()
+                    file_info = QFileInfo(self.outFile)
+                    base_name = file_info.baseName()
                     if self.dlg.addToToc.isChecked():
-                        vlayer = QgsVectorLayer(self.outFile, unicode(baseName), "ogr")
+                        vlayer = QgsVectorLayer(self.outFile, base_name, "ogr")
                         if vlayer.isValid():
-                            QgsMapLayerRegistry.instance().addMapLayers([vlayer])
+                            QgsProject.instance().addMapLayers([vlayer])
             elif self.dataType == 'raster':
                 self.outFile = self.inDataset.split(os.extsep)[0] + "_" + str(self.longitudeRange) + ".tif"
                 if os.path.exists(self.outFile):
@@ -268,9 +273,9 @@ class GeometryWrapper:
                     self.run()
                 else:
                     utils.processRaster(self.inDataset, self.longitudeRange, self.outFile)
-                    fileInfo = QFileInfo(self.outFile)
-                    baseName = fileInfo.baseName()
+                    file_info = QFileInfo(self.outFile)
+                    base_name = file_info.baseName()
                     if self.dlg.addToToc.isChecked():
-                        rlayer = QgsRasterLayer(self.outFile, unicode(baseName))
+                        rlayer = QgsRasterLayer(self.outFile, base_name)
                         if rlayer.isValid():
-                            QgsMapLayerRegistry.instance().addMapLayers([rlayer])
+                            QgsProject.instance().addMapLayers([rlayer])
