@@ -26,9 +26,9 @@ from PyQt5.QtWidgets import QAction, QFileDialog, QMessageBox
 # Initialize Qt resources from file resources.py
 from .resources import *
 # Import the code for the dialog
-from geometry_wrapper_dialog import GeometryWrapperDialog
+from .geometry_wrapper_dialog import GeometryWrapperDialog
 import os
-import utils
+from .utils import process_raster, process_vector
 from qgis.core import QgsRasterLayer, QgsVectorLayer, QgsProject
 
 
@@ -64,7 +64,6 @@ class GeometryWrapper:
         # Declare instance attributes
         self.actions = []
         self.menu = self.tr(u'&Geometry Wrapper')
-        # TODO: We are going to let the user set this up in a future iteration
         self.toolbar = self.iface.addToolBar(u'GeometryWrapper')
         self.toolbar.setObjectName(u'GeometryWrapper')
         
@@ -196,8 +195,8 @@ class GeometryWrapper:
                                               "raster or vector (*.shp *.tif)",
                                               )
         if in_name:
-            self.inDataset = QFileInfo(in_name).absoluteFilePath()
-            self.dlg.inDataset.setText(QFileInfo(in_name).absoluteFilePath())
+            self.inDataset = QFileInfo(in_name[0]).absoluteFilePath()
+            self.dlg.inDataset.setText(QFileInfo(in_name[0]).absoluteFilePath())
 
     def run(self):
         """Run method that performs all the real work"""
@@ -258,13 +257,13 @@ class GeometryWrapper:
                     msg.exec_()
                     self.run()
                 else:
-                    utils.processVector(self.inDataset, self.longitudeRange, self.outFile)
+                    process_vector(self.inDataset, self.longitudeRange, self.outFile)
                     file_info = QFileInfo(self.outFile)
                     base_name = file_info.baseName()
                     if self.dlg.addToToc.isChecked():
                         vlayer = QgsVectorLayer(self.outFile, base_name, "ogr")
                         if vlayer.isValid():
-                            QgsProject.instance().addMapLayers([vlayer])
+                            QgsProject.instance().addMapLayer(vlayer)
             elif self.dataType == 'raster':
                 self.outFile = self.inDataset.split(os.extsep)[0] + "_" + str(self.longitudeRange) + ".tif"
                 if os.path.exists(self.outFile):
@@ -272,10 +271,10 @@ class GeometryWrapper:
                     msg.exec_()
                     self.run()
                 else:
-                    utils.processRaster(self.inDataset, self.longitudeRange, self.outFile)
+                    process_raster(self.inDataset, self.longitudeRange, self.outFile)
                     file_info = QFileInfo(self.outFile)
                     base_name = file_info.baseName()
                     if self.dlg.addToToc.isChecked():
                         rlayer = QgsRasterLayer(self.outFile, base_name)
                         if rlayer.isValid():
-                            QgsProject.instance().addMapLayers([rlayer])
+                            QgsProject.instance().addMapLayer(rlayer)
