@@ -23,13 +23,14 @@
 
 import os
 
-from PyQt4 import QtGui, uic
+from PyQt5 import uic
+from PyQt5.QtWidgets import QDialog
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'geometry_wrapper_dialog_base.ui'))
 
 
-class GeometryWrapperDialog(QtGui.QDialog, FORM_CLASS):
+class GeometryWrapperDialog(QDialog, FORM_CLASS):
     def __init__(self, parent=None):
         """Constructor."""
         super(GeometryWrapperDialog, self).__init__(parent)
