@@ -20,7 +20,7 @@
  *                                                                         *
  ***************************************************************************/
 """
-from PyQt5.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QFileInfo
+from PyQt5.QtCore import QCoreApplication, QFileInfo
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QAction, QFileDialog, QMessageBox
 # Initialize Qt resources from file resources.py
@@ -47,19 +47,6 @@ class GeometryWrapper:
         self.iface = iface
         # initialize plugin directory
         self.plugin_dir = os.path.dirname(__file__)
-        # initialize locale
-        locale = QSettings().value('locale/userLocale')[0:2]
-        locale_path = os.path.join(
-            self.plugin_dir,
-            'i18n',
-            'GeometryWrapper_{}.qm'.format(locale))
-
-        if os.path.exists(locale_path):
-            self.translator = QTranslator()
-            self.translator.load(locale_path)
-
-            if qVersion() > '4.3.3':
-                QCoreApplication.installTranslator(self.translator)
 
         # Declare instance attributes
         self.actions = []
@@ -72,9 +59,9 @@ class GeometryWrapper:
         self.dlg.inButton.clicked.connect(self.set_in_dataset)
 
         self.input_dataset = None
-        self.dataType = None
-        self.longitudeRange = None
-        self.outFile = None
+        self.data_type = None
+        self.longitude_range = None
+        self.output_file = None
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -188,14 +175,14 @@ class GeometryWrapper:
         # display file dialog to select input dataset
 
     def set_in_dataset(self):
-        in_name = QFileDialog.getOpenFileName(None,
-                                              'Select input dataset',
-                                              '',
-                                              "raster or vector (*.shp *.tif)",
-                                              )
-        if in_name:
-            self.input_dataset = QFileInfo(in_name[0]).absoluteFilePath()
-            self.dlg.input_dataset.setText(QFileInfo(in_name[0]).absoluteFilePath())
+        input_name = QFileDialog.getOpenFileName(None,
+                                                 'Select input dataset',
+                                                 '',
+                                                 "raster or vector (*.shp *.tif)",
+                                                 )
+        if input_name:
+            self.input_dataset = QFileInfo(input_name[0]).absoluteFilePath()
+            self.dlg.input_dataset.setText(QFileInfo(input_name[0]).absoluteFilePath())
 
     def run(self):
         """Run method that performs all the real work"""
@@ -216,64 +203,66 @@ class GeometryWrapper:
         # See if OK was pressed
         if result:
             # get raster or vector file type
-            self.dataType = ''
+            self.data_type = ''
             file_name = self.input_dataset
             file_info = QFileInfo(self.input_dataset)
             base_name = file_info.baseName()
-            rlayer = QgsRasterLayer(file_name, base_name)
-            vlayer = QgsVectorLayer(file_name, base_name, "ogr")
-            if rlayer.isValid():
-                self.dataType = 'raster'
-                srs = rlayer.crs().authid()
-                if srs != "EPSG:4326":
-                    del rlayer
-                    msg.setText("Input dataset must have EPSG:4326 projection")
+            raster_layer = QgsRasterLayer(file_name, base_name)
+            vector_layer = QgsVectorLayer(file_name, base_name, "ogr")
+            if raster_layer.isValid():
+                self.data_type = 'raster'
+                if raster_layer.crs().isGeograpic():
+                    pass
+                else:
+                    del raster_layer
+                    msg.setText("Input dataset must have geographic coordinate system (such as WGS84)")
                     msg.exec_()
                     self.run()
-            elif vlayer.isValid():
-                self.dataType = 'vector'
-                srs = vlayer.crs().authid()
-                if srs != "EPSG:4326":
-                    del vlayer
-                    msg.setText("Input dataset must have EPSG:4326 projection")
+            elif vector_layer.isValid():
+                self.data_type = 'vector'
+                if vector_layer.crs().isGeographic():
+                    pass
+                else:
+                    del vector_layer
+                    msg.setText("Input dataset must have geographic coordinate system (such as WGS84)")
                     msg.exec_()
                     self.run()
 
             # check projection:
 
             # set output longitude range
-            self.longitudeRange = 0
+            self.longitude_range = 0
             if self.dlg.radioButton180.isChecked():
-                self.longitudeRange = 180
+                self.longitude_range = 180
             elif self.dlg.radioButton360.isChecked():
-                self.longitudeRange = 360
+                self.longitude_range = 360
 
             # send data for processing
-            if self.dataType == 'vector':
-                self.outFile = self.input_dataset.split(os.extsep)[0] + "_" + str(self.longitudeRange) + ".shp"
-                if os.path.exists(self.outFile):
-                    msg.setText("Cannot overwrite existing file " + os.path.basename(self.outFile))
+            if self.data_type == 'vector':
+                self.output_file = self.input_dataset.split(os.extsep)[0] + "_" + str(self.longitude_range) + ".shp"
+                if os.path.exists(self.output_file):
+                    msg.setText("Cannot overwrite existing file " + os.path.basename(self.output_file))
                     msg.exec_()
                     self.run()
                 else:
-                    process_vector(self.input_dataset, self.longitudeRange, self.outFile)
-                    file_info = QFileInfo(self.outFile)
+                    process_vector(self.input_dataset, self.longitude_range, self.output_file)
+                    file_info = QFileInfo(self.output_file)
                     base_name = file_info.baseName()
                     if self.dlg.addToToc.isChecked():
-                        vlayer = QgsVectorLayer(self.outFile, base_name, "ogr")
-                        if vlayer.isValid():
-                            QgsProject.instance().addMapLayer(vlayer)
-            elif self.dataType == 'raster':
-                self.outFile = self.input_dataset.split(os.extsep)[0] + "_" + str(self.longitudeRange) + ".tif"
-                if os.path.exists(self.outFile):
-                    msg.setText("Cannot overwrite existing file " + os.path.basename(self.outFile))
+                        vector_layer = QgsVectorLayer(self.output_file, base_name, "ogr")
+                        if vector_layer.isValid():
+                            QgsProject.instance().addMapLayer(vector_layer)
+            elif self.data_type == 'raster':
+                self.output_file = self.input_dataset.split(os.extsep)[0] + "_" + str(self.longitude_range) + ".tif"
+                if os.path.exists(self.output_file):
+                    msg.setText("Cannot overwrite existing file " + os.path.basename(self.output_file))
                     msg.exec_()
                     self.run()
                 else:
-                    process_raster(self.input_dataset, self.longitudeRange, self.outFile)
-                    file_info = QFileInfo(self.outFile)
+                    process_raster(self.input_dataset, self.longitude_range, self.output_file)
+                    file_info = QFileInfo(self.output_file)
                     base_name = file_info.baseName()
                     if self.dlg.addToToc.isChecked():
-                        rlayer = QgsRasterLayer(self.outFile, base_name)
-                        if rlayer.isValid():
-                            QgsProject.instance().addMapLayer(rlayer)
+                        raster_layer = QgsRasterLayer(self.output_file, base_name)
+                        if raster_layer.isValid():
+                            QgsProject.instance().addMapLayer(raster_layer)
