@@ -66,12 +66,12 @@ class GeometryWrapper:
         self.menu = self.tr(u'&Geometry Wrapper')
         self.toolbar = self.iface.addToolBar(u'GeometryWrapper')
         self.toolbar.setObjectName(u'GeometryWrapper')
-        
-        # listen for browse button 
+
+        # listen for browse button
         self.dlg = GeometryWrapperDialog()
         self.dlg.inButton.clicked.connect(self.set_in_dataset)
 
-        self.inDataset = None
+        self.input_dataset = None
         self.dataType = None
         self.longitudeRange = None
         self.outFile = None
@@ -92,16 +92,16 @@ class GeometryWrapper:
         return QCoreApplication.translate('GeometryWrapper', message)
 
     def add_action(
-        self,
-        icon_path,
-        text,
-        callback,
-        enabled_flag=True,
-        add_to_menu=True,
-        add_to_toolbar=True,
-        status_tip=None,
-        whats_this=None,
-        parent=None):
+            self,
+            icon_path,
+            text,
+            callback,
+            enabled_flag=True,
+            add_to_menu=True,
+            add_to_toolbar=True,
+            status_tip=None,
+            whats_this=None,
+            parent=None):
         """Add a toolbar icon to the toolbar.
 
         :param icon_path: Path to the icon for this action. Can be a resource
@@ -142,8 +142,6 @@ class GeometryWrapper:
         """
 
         # Create the dialog (after translation) and keep reference
-        # self.dlg = GeometryWrapperDialog()
-
         icon = QIcon(icon_path)
         action = QAction(icon, text, parent)
         action.triggered.connect(callback)
@@ -186,8 +184,9 @@ class GeometryWrapper:
             self.iface.removeToolBarIcon(action)
         # remove the toolbar
         del self.toolbar
-        
+
         # display file dialog to select input dataset
+
     def set_in_dataset(self):
         in_name = QFileDialog.getOpenFileName(None,
                                               'Select input dataset',
@@ -195,13 +194,13 @@ class GeometryWrapper:
                                               "raster or vector (*.shp *.tif)",
                                               )
         if in_name:
-            self.inDataset = QFileInfo(in_name[0]).absoluteFilePath()
-            self.dlg.inDataset.setText(QFileInfo(in_name[0]).absoluteFilePath())
+            self.input_dataset = QFileInfo(in_name[0]).absoluteFilePath()
+            self.dlg.input_dataset.setText(QFileInfo(in_name[0]).absoluteFilePath())
 
     def run(self):
         """Run method that performs all the real work"""
-        # clear the indataset field
-        self.dlg.inDataset.clear()
+        # clear the input_dataset field
+        self.dlg.input_dataset.clear()
 
         # show the dialog
         self.dlg.show()
@@ -218,8 +217,8 @@ class GeometryWrapper:
         if result:
             # get raster or vector file type
             self.dataType = ''
-            file_name = self.inDataset
-            file_info = QFileInfo(self.inDataset)
+            file_name = self.input_dataset
+            file_info = QFileInfo(self.input_dataset)
             base_name = file_info.baseName()
             rlayer = QgsRasterLayer(file_name, base_name)
             vlayer = QgsVectorLayer(file_name, base_name, "ogr")
@@ -239,25 +238,25 @@ class GeometryWrapper:
                     msg.setText("Input dataset must have EPSG:4326 projection")
                     msg.exec_()
                     self.run()
-            
+
             # check projection:
-            
+
             # set output longitude range
             self.longitudeRange = 0
             if self.dlg.radioButton180.isChecked():
                 self.longitudeRange = 180
             elif self.dlg.radioButton360.isChecked():
                 self.longitudeRange = 360
-                
+
             # send data for processing
             if self.dataType == 'vector':
-                self.outFile = self.inDataset.split(os.extsep)[0] + "_" + str(self.longitudeRange) + ".shp"
+                self.outFile = self.input_dataset.split(os.extsep)[0] + "_" + str(self.longitudeRange) + ".shp"
                 if os.path.exists(self.outFile):
                     msg.setText("Cannot overwrite existing file " + os.path.basename(self.outFile))
                     msg.exec_()
                     self.run()
                 else:
-                    process_vector(self.inDataset, self.longitudeRange, self.outFile)
+                    process_vector(self.input_dataset, self.longitudeRange, self.outFile)
                     file_info = QFileInfo(self.outFile)
                     base_name = file_info.baseName()
                     if self.dlg.addToToc.isChecked():
@@ -265,13 +264,13 @@ class GeometryWrapper:
                         if vlayer.isValid():
                             QgsProject.instance().addMapLayer(vlayer)
             elif self.dataType == 'raster':
-                self.outFile = self.inDataset.split(os.extsep)[0] + "_" + str(self.longitudeRange) + ".tif"
+                self.outFile = self.input_dataset.split(os.extsep)[0] + "_" + str(self.longitudeRange) + ".tif"
                 if os.path.exists(self.outFile):
                     msg.setText("Cannot overwrite existing file " + os.path.basename(self.outFile))
                     msg.exec_()
                     self.run()
                 else:
-                    process_raster(self.inDataset, self.longitudeRange, self.outFile)
+                    process_raster(self.input_dataset, self.longitudeRange, self.outFile)
                     file_info = QFileInfo(self.outFile)
                     base_name = file_info.baseName()
                     if self.dlg.addToToc.isChecked():
