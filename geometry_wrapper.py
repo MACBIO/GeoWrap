@@ -56,7 +56,7 @@ class GeometryWrapper:
 
         # listen for browse button
         self.dlg = GeometryWrapperDialog()
-        self.dlg.inButton.clicked.connect(self.set_in_dataset)
+        self.dlg.input_button.clicked.connect(self.set_in_dataset)
 
         self.input_dataset = None
         self.data_type = None

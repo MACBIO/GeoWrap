@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>300</height>
+    <width>439</width>
+    <height>352</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -35,10 +35,10 @@
       <item>
        <layout class="QHBoxLayout" name="layout1">
         <item>
-         <widget class="QLineEdit" name="inDataset"/>
+         <widget class="QLineEdit" name="input_dataset"/>
         </item>
         <item>
-         <widget class="QToolButton" name="inButton">
+         <widget class="QToolButton" name="input_button">
           <property name="text">
            <string>Browse</string>
           </property>
