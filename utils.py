@@ -16,6 +16,10 @@ def check_output(command, console):
     return return_code, output
 
 def process_vector_layer(in_layer, longitude_range):
+    from qgis.analysis import QgsNativeAlgorithms
+    from qgis.core import QgsApplication
+    QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
+    
     pass
 
 def process_raster_layer(in_layer, longitude_range):
