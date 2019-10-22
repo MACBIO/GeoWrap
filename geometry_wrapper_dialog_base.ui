@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>439</width>
-    <height>352</height>
+    <height>248</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -18,45 +18,86 @@
     <enum>QLayout::SetNoConstraint</enum>
    </property>
    <item>
-    <widget class="QGroupBox" name="groupBox_0">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
+    <widget class="QTabWidget" name="file_layer_tab_widget">
+     <property name="currentIndex">
+      <number>0</number>
      </property>
-     <property name="title">
-      <string>Dataset to Wrap:</string>
-     </property>
-     <layout class="QVBoxLayout">
-      <property name="sizeConstraint">
-       <enum>QLayout::SetNoConstraint</enum>
-      </property>
-      <item>
-       <layout class="QHBoxLayout" name="layout1">
+     <widget class="QWidget" name="file_tab">
+      <attribute name="title">
+       <string>File</string>
+      </attribute>
+      <widget class="QGroupBox" name="groupBox_0">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>20</y>
+         <width>391</width>
+         <height>78</height>
+        </rect>
+       </property>
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="title">
+        <string>File to Wrap:</string>
+       </property>
+       <layout class="QVBoxLayout">
+        <property name="sizeConstraint">
+         <enum>QLayout::SetNoConstraint</enum>
+        </property>
         <item>
-         <widget class="QLineEdit" name="input_dataset"/>
+         <layout class="QHBoxLayout" name="layout1">
+          <item>
+           <widget class="QLineEdit" name="input_dataset"/>
+          </item>
+          <item>
+           <widget class="QToolButton" name="input_button">
+            <property name="text">
+             <string>Browse</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </item>
         <item>
-         <widget class="QToolButton" name="input_button">
+         <widget class="QCheckBox" name="add_to_toc">
           <property name="text">
-           <string>Browse</string>
+           <string>Add created layer to the TOC</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
           </property>
          </widget>
         </item>
        </layout>
-      </item>
-      <item>
-       <widget class="QCheckBox" name="addToToc">
-        <property name="text">
-         <string>Add created layer to the TOC</string>
-        </property>
-        <property name="checked">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-     </layout>
+      </widget>
+     </widget>
+     <widget class="QWidget" name="layer_tab">
+      <attribute name="title">
+       <string>Layer</string>
+      </attribute>
+      <widget class="QGroupBox" name="groupBox">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>9</y>
+         <width>401</width>
+         <height>101</height>
+        </rect>
+       </property>
+       <property name="title">
+        <string>Layer to wrap</string>
+       </property>
+       <layout class="QVBoxLayout" name="verticalLayout_2">
+        <item>
+         <widget class="QgsMapLayerComboBox" name="layer_combobox"/>
+        </item>
+       </layout>
+      </widget>
+     </widget>
     </widget>
    </item>
    <item>
@@ -66,7 +107,7 @@
      </property>
      <layout class="QHBoxLayout" name="horizontalLayout_2">
       <item>
-       <widget class="QRadioButton" name="radioButton360">
+       <widget class="QRadioButton" name="radio_button360">
         <property name="text">
          <string>[0,360]</string>
         </property>
@@ -76,7 +117,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QRadioButton" name="radioButton180">
+       <widget class="QRadioButton" name="radio_button180">
         <property name="text">
          <string>[-180,180]</string>
         </property>
@@ -100,6 +141,13 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QgsMapLayerComboBox</class>
+   <extends>QComboBox</extends>
+   <header>qgsmaplayercombobox.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections>
   <connection>

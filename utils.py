@@ -12,11 +12,16 @@ def check_output(command, console):
                                    stderr=subprocess.STDOUT,
                                    universal_newlines=True)
     output, error = process.communicate()
-    returncode = process.poll()
-    return returncode, output
+    return_code = process.poll()
+    return return_code, output
 
+def process_vector_layer(in_layer, longitude_range):
+    pass
 
-def process_vector(in_file, longitude_range, out_file):
+def process_raster_layer(in_layer, longitude_range):
+    pass
+
+def process_vector_file(in_file, longitude_range, out_file):
     if longitude_range == 180:
         extent2 = '-clipsrc 180 -90 360 90'
         sql = '-dialect sqlite -sql "SELECT ShiftCoords(Geometry,-360,0), * FROM'
@@ -59,7 +64,7 @@ def process_vector(in_file, longitude_range, out_file):
                         os.remove(os.path.join(os.path.dirname(in_file), g))
     
 
-def process_raster(in_file, longitude_range, out_file):
+def process_raster_file(in_file, longitude_range, out_file):
     if longitude_range == 180:
         projwin1 = '-projwin 0 90 180 -90'
         a_ullr1 = '-a_ullr 0 90 180 -90'
