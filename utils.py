@@ -15,15 +15,60 @@ def check_output(command, console):
     return_code = process.poll()
     return return_code, output
 
+
 def process_vector_layer(in_layer, longitude_range):
-    from qgis.analysis import QgsNativeAlgorithms
-    from qgis.core import QgsApplication
-    QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
-    
-    pass
+    # from qgis.analysis import QgsNativeAlgorithms
+    # from qgis.core import QgsApplication
+    # QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
+    import processing
+    extent1 = None
+    extent2 = None
+    delta_x = None
+
+    if longitude_range == '360':
+        extent1 = '-180, 0, -90, 90'
+        extent2 = '0, 180, -90, 90'
+        delta_x = 360
+    elif longitude_range == '180':
+        extent1 = '180, 360, -90, 90'
+        extent2 = '0, 180, -90, 90'
+        delta_x = -360
+    else:
+        print("something went wrong with the longitude range variable")
+
+    # clip left side
+    params = dict()
+    params['INPUT'] = in_layer.name()
+    params['EXTENT'] = extent1
+    params['CLIP'] = True
+    params['OUTPUT'] = 'memory:'
+    part1 = processing.run("native:extractbyextent", params)
+
+    # clip right side
+    params = dict()
+    params['INPUT'] = in_layer.name()
+    params['EXTENT'] = extent2
+    params['CLIP'] = True
+    params['OUTPUT'] = 'memory:'
+    part2 = processing.run("native:extractbyextent", params)
+
+    # do the wrapping part
+    params = dict()
+    params["INPUT"] = part1
+    params['DELTA_X'] = delta_x
+    params['OUTPUT'] = 'memory:'
+    part1 = processing.run("native:translategeometry", params)
+
+    # append part2 to part1
+    params = dict()
+    params['LAYERS'] = [part1.name(), part2.name()]
+    params['OUTPUT'] = 'memory:'
+    return processing.run("native:mergevectorlayers", params)
+
 
 def process_raster_layer(in_layer, longitude_range):
     pass
+
 
 def process_vector_file(in_file, longitude_range, out_file):
     if longitude_range == 180:

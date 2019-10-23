@@ -193,6 +193,13 @@ class GeometryWrapper:
         # See if OK was pressed
         if result:
 
+            # set output longitude range
+            self.longitude_range = 0
+            if self.dlg.radio_button180.isChecked():
+                self.longitude_range = '180'
+            elif self.dlg.radio_button360.isChecked():
+                self.longitude_range = '360'
+
             # check whether file or layer tab is selected
             if self.dlg.file_layer_tab_widget.currentIndex() == 0:
                 self.selected_tab = "file"
@@ -225,15 +232,6 @@ class GeometryWrapper:
                         msg.setText("Input dataset must have geographic coordinate system (such as WGS84)")
                         msg.exec_()
                         self.run()
-
-                # check projection:
-
-                # set output longitude range
-                self.longitude_range = 0
-                if self.dlg.radio_button180.isChecked():
-                    self.longitude_range = 180
-                elif self.dlg.radio_button360.isChecked():
-                    self.longitude_range = 360
 
                 # send data for processing
                 if self.data_type == 'vector':
