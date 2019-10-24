@@ -67,43 +67,59 @@ def process_vector_layer(in_layer, longitude_range):
 
 def process_raster_layer(in_layer, longitude_range):
     import processing
-    extent1 = None
-    extent2 = None
-    delta_x = None
+    from qgis.core import QgsRasterLayer
+    part1 = '/vsimem/part1.tif'
+    part2 = '/vsimem/part2.tif'
+    merged = '/vsimem/merged.tif:'
+    projwin1 = None
+    a_ullr1 = None
+    projwin2 = None
+    a_ullr2 = None
 
-    if longitude_range == '360':
-        extent1 = '-180, 0, -90, 90'
-        extent2 = '0, 180, -90, 90'
-        delta_x = 360
-    elif longitude_range == '180':
-        extent1 = '180, 360, -90, 90'
-        extent2 = '0, 180, -90, 90'
-        delta_x = -360
+    if longitude_range == "180":
+        projwin1 = '-projwin=0|90|180|-90'
+        a_ullr1 = '-a_ullr=0|90|180|-90'
+        projwin2 = '-projwin=180|90|360|-90'
+        a_ullr2 = '-a_ullr=-180|90|0|-90'
+    elif longitude_range == "360":
+        projwin1 = '-projwin=-180|90|0|-90'
+        a_ullr1 = '-a_ullr=180|90|360|-90'
+        projwin2 = '-projwin=0|90|180|-90'
+        a_ullr2 = '-a_ullr=0|90|180|-90'
     else:
         print("something went wrong with the longitude range variable")
 
     # clip left side
     params = dict()
     params['INPUT'] = in_layer
-    params['PROJWIN'] = extent1
-    params['CLIP'] = True
-    params['OUTPUT'] = '/vsimem/part1.tif'
-    part1 = processing.run("gdal:cliprasterbyextent", params)
+    params['OPTIONS'] = [projwin1, a_ullr1]
+    params['OUTPUT'] = part1
+    output1 = processing.run("gdal:translate", params)
+    if os.path.exists(part1):
+        print("part1 exists")
+    else:
+        print("part1 missing")
 
     # clip right side
     params = dict()
     params['INPUT'] = in_layer
-    params['EXTENT'] = extent2
-    params['CLIP'] = True
-    params['OUTPUT'] = '/vsimem/part2.tif'
-    part2 = processing.run("gdal:cliprasterbyextent", params)
+    params['OPTIONS'] = [projwin2, a_ullr2]
+    params['OUTPUT'] = part2
+    output2 = processing.run("gdal:translate", params)
+    if os.path.exists(part2):
+        print("part2 exists")
+    else:
+        print("part2 missing")
 
-    # do the wrapping part
+    # merge part2 to part1
     params = dict()
-    params["INPUT"] = part1['OUTPUT']
-    params['DELTA_X'] = int(delta_x)
-    params['OUTPUT'] = '/vsimem/part1.tif'
-    part1 = processing.run("native:translategeometry", params)  # this isn't the correct algorithm
+    params['INPUT'] = [part1, part2]
+    params['OUTPUT'] = merged
+    output3 = processing.run("gdal:merge", params)
+
+    output_layer = QgsRasterLayer(merged)
+
+    return output_layer
 
 
 def process_vector_file(in_file, longitude_range, out_file):
