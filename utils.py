@@ -35,7 +35,7 @@ def process_vector_layer(in_layer, longitude_range):
 
     # clip left side
     params = dict()
-    params['INPUT'] = in_layer.name()
+    params['INPUT'] = in_layer
     params['EXTENT'] = extent1
     params['CLIP'] = True
     params['OUTPUT'] = 'memory:'
@@ -43,7 +43,7 @@ def process_vector_layer(in_layer, longitude_range):
 
     # clip right side
     params = dict()
-    params['INPUT'] = in_layer.name()
+    params['INPUT'] = in_layer
     params['EXTENT'] = extent2
     params['CLIP'] = True
     params['OUTPUT'] = 'memory:'
@@ -66,7 +66,44 @@ def process_vector_layer(in_layer, longitude_range):
 
 
 def process_raster_layer(in_layer, longitude_range):
-    pass
+    import processing
+    extent1 = None
+    extent2 = None
+    delta_x = None
+
+    if longitude_range == '360':
+        extent1 = '-180, 0, -90, 90'
+        extent2 = '0, 180, -90, 90'
+        delta_x = 360
+    elif longitude_range == '180':
+        extent1 = '180, 360, -90, 90'
+        extent2 = '0, 180, -90, 90'
+        delta_x = -360
+    else:
+        print("something went wrong with the longitude range variable")
+
+    # clip left side
+    params = dict()
+    params['INPUT'] = in_layer
+    params['PROJWIN'] = extent1
+    params['CLIP'] = True
+    params['OUTPUT'] = '/vsimem/part1.tif'
+    part1 = processing.run("gdal:cliprasterbyextent", params)
+
+    # clip right side
+    params = dict()
+    params['INPUT'] = in_layer
+    params['EXTENT'] = extent2
+    params['CLIP'] = True
+    params['OUTPUT'] = '/vsimem/part2.tif'
+    part2 = processing.run("gdal:cliprasterbyextent", params)
+
+    # do the wrapping part
+    params = dict()
+    params["INPUT"] = part1['OUTPUT']
+    params['DELTA_X'] = int(delta_x)
+    params['OUTPUT'] = '/vsimem/part1.tif'
+    part1 = processing.run("native:translategeometry", params)  # this isn't the correct algorithm
 
 
 def process_vector_file(in_file, longitude_range, out_file):

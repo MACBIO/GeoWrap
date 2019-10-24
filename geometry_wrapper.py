@@ -20,7 +20,7 @@
  *                                                                         *
  ***************************************************************************/
 """
-from PyQt5.QtCore import QCoreApplication, QFileInfo
+from PyQt5.QtCore import QFileInfo
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QAction, QFileDialog, QMessageBox
 # Initialize Qt resources from file resources.py
@@ -273,23 +273,18 @@ class GeometryWrapper:
                 else:
                     msg.setText("Input dataset must be vector or raster")
                     msg.exec_()
-                    self.run()
-                if self.input_layer.crs().isGeographic():
-                    pass
-                else:
+                if not self.input_layer.crs().isGeographic():
                     msg.setText("Input dataset must have geographic coordinate system (such as WGS84)")
                     msg.exec_()
-                    self.run()
-
-                if self.input_layer.isValid():
-                    if self.data_type == "vector":
-                        self.output_layer = process_vector_layer(self.input_layer, self.longitude_range)
-                    else:
-                        self.output_layer = process_raster_layer(self.input_layer, self.longitude_range)
                 else:
-                    msg.setText("Input layer is not valid for some reason")
-                    msg.exec_()
-                    self.run()
+                    if self.input_layer.isValid():
+                        if self.data_type == "vector":
+                            self.output_layer = process_vector_layer(self.input_layer, self.longitude_range)
+                        else:
+                            self.output_layer = process_raster_layer(self.input_layer, self.longitude_range)
+                    else:
+                        msg.setText("Input layer is not valid for some reason")
+                        msg.exec_()
 
                 QgsProject.instance().addMapLayer(self.output_layer)
 
