@@ -30,7 +30,7 @@ from .geometry_wrapper_dialog import GeometryWrapperDialog
 import os
 from .utils import process_raster_file, process_vector_file
 from .utils import process_raster_layer, process_vector_layer
-from qgis.core import QgsRasterLayer, QgsVectorLayer, QgsProject
+from qgis.core import QgsRasterLayer, QgsVectorLayer, QgsProject, QgsMapLayerType
 
 
 class GeometryWrapper:
@@ -265,9 +265,10 @@ class GeometryWrapper:
 
             elif self.selected_tab == "layer":
                 self.input_layer = self.dlg.layer_combobox.currentLayer()
-                if self.input_layer.type() == 0:
+                print(self.input_layer.name())
+                if self.input_layer.type() == QgsMapLayerType.VectorLayer:
                     self.data_type = "vector"
-                elif self.input_layer.type() == 1:
+                elif self.input_layer.type() == QgsMapLayerType.RasterLayer:
                     self.data_type = "raster"
                 else:
                     msg.setText("Input dataset must be vector or raster")

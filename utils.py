@@ -17,9 +17,6 @@ def check_output(command, console):
 
 
 def process_vector_layer(in_layer, longitude_range):
-    # from qgis.analysis import QgsNativeAlgorithms
-    # from qgis.core import QgsApplication
-    # QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
     import processing
     extent1 = None
     extent2 = None
@@ -54,16 +51,18 @@ def process_vector_layer(in_layer, longitude_range):
 
     # do the wrapping part
     params = dict()
-    params["INPUT"] = part1
-    params['DELTA_X'] = delta_x
+    params["INPUT"] = part1['OUTPUT']
+    params['DELTA_X'] = int(delta_x)
     params['OUTPUT'] = 'memory:'
     part1 = processing.run("native:translategeometry", params)
 
     # append part2 to part1
     params = dict()
-    params['LAYERS'] = [part1.name(), part2.name()]
+    params['LAYERS'] = [part1['OUTPUT'], part2['OUTPUT']]
     params['OUTPUT'] = 'memory:'
-    return processing.run("native:mergevectorlayers", params)
+    output = processing.run("native:mergevectorlayers", params)
+
+    return output['OUTPUT']
 
 
 def process_raster_layer(in_layer, longitude_range):
