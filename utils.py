@@ -166,6 +166,11 @@ def process_vector_file(in_file, longitude_range, out_file):
     
 
 def process_raster_file(in_file, longitude_range, out_file):
+    projwin1 = None
+    a_ullr1 = None
+    projwin2 = None
+    a_ullr2 = None
+
     if longitude_range == 180:
         projwin1 = '-projwin 0 90 180 -90'
         a_ullr1 = '-a_ullr 0 90 180 -90'
