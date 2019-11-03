@@ -31,6 +31,7 @@ import os
 from .utils import process_raster_file, process_vector_file
 from .utils import process_raster_layer, process_vector_layer
 from qgis.core import QgsRasterLayer, QgsVectorLayer, QgsProject, QgsMapLayerType
+from qgis.core import QgsVectorFileWriter
 
 
 class GeometryWrapper:
@@ -212,23 +213,19 @@ class GeometryWrapper:
                 file_name = self.input_dataset
                 file_info = QFileInfo(self.input_dataset)
                 base_name = file_info.baseName()
-                raster_layer = QgsRasterLayer(file_name, base_name)
-                vector_layer = QgsVectorLayer(file_name, base_name, "ogr")
+                raster_layer = QgsRasterLayer(file_name)
+                vector_layer = QgsVectorLayer(file_name, "ogr")
                 if raster_layer.isValid():
                     self.data_type = 'raster'
-                    if raster_layer.crs().isGeograpic():
-                        pass
-                    else:
-                        del raster_layer
+                    if not raster_layer.crs().isGeographic():
+                        raster_layer = None
                         msg.setText("Input dataset must have geographic coordinate system (such as WGS84)")
                         msg.exec_()
                         self.run()
                 elif vector_layer.isValid():
                     self.data_type = 'vector'
-                    if vector_layer.crs().isGeographic():
-                        pass
-                    else:
-                        del vector_layer
+                    if not vector_layer.crs().isGeographic():
+                        vector_layer = None
                         msg.setText("Input dataset must have geographic coordinate system (such as WGS84)")
                         msg.exec_()
                         self.run()
@@ -241,9 +238,13 @@ class GeometryWrapper:
                         msg.exec_()
                         self.run()
                     else:
-                        process_vector_file(self.input_dataset, self.longitude_range, self.output_file)
-                        file_info = QFileInfo(self.output_file)
-                        base_name = file_info.baseName()
+                        vector_layer = process_vector_file(self.input_dataset, self.longitude_range)
+                        writer = QgsVectorFileWriter.writeAsVectorFormat(vector_layer,
+                                                                         self.output_file,
+                                                                         "utf-8",
+                                                                         vector_layer.crs(),
+                                                                         "ESRI Shapefile")
+                        base_name = file_info.baseName() + "_" + str(self.longitude_range)
                         if self.dlg.add_to_toc.isChecked():
                             self.output_layer = QgsVectorLayer(self.output_file, base_name, "ogr")
                             if self.output_layer.isValid():
