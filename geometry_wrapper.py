@@ -282,7 +282,10 @@ class GeometryWrapper:
                         if self.data_type == "vector":
                             self.output_layer = process_vector_layer(self.input_layer, self.longitude_range)
                         else:
-                            self.output_layer = process_raster_layer(self.input_layer, self.longitude_range)
+                            raster_in_file = self.input_layer.dataSourceUri()
+                            if os.path.exists(raster_in_file):
+                                raster_out_file = os.path.join(raster_in_file.split(os.extsep)[0] + "_" + str(self.longitude_range) + raster_in_file.split(os.extsep)[1])
+                                self.output_layer = process_raster_file(raster_in_file, self.longitude_range, raster_out_file)
                     else:
                         msg.setText("Input layer is not valid for some reason")
                         msg.exec_()
