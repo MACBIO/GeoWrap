@@ -206,7 +206,7 @@ class GeometryWrapper:
                 self.longitude_range = '360'
 
             # check whether file or layer tab is selected
-            if self.dlg.file_layer_tab_widget.currentIndex() == 0:
+            if self.dlg.file_layer_tab_widget.currentIndex() == 1:
                 self.selected_tab = "file"
             else:
                 self.selected_tab = "layer"
