@@ -29,9 +29,13 @@ from .resources import *
 from .geometry_wrapper_dialog import GeometryWrapperDialog
 import os
 from .utils import process_raster_file, process_vector_file
-from .utils import process_raster_layer, process_vector_layer
-from qgis.core import QgsRasterLayer, QgsVectorLayer, QgsProject, QgsMapLayerType
-from qgis.core import QgsVectorFileWriter
+from .utils import process_vector_layer
+from qgis.core import QgsRasterLayer, QgsVectorLayer, QgsProject, QgsVectorFileWriter
+try:
+    from qgis.core import QgsMapLayerType
+except ImportError:
+    from qgis.core import QgsMapLayer
+    QgsMapLayerType =  QgsMapLayer.LayerType
 
 
 class GeometryWrapper:
@@ -282,9 +286,9 @@ class GeometryWrapper:
                         if self.data_type == "vector":
                             self.output_layer = process_vector_layer(self.input_layer, self.longitude_range)
                         else:
-                            raster_in_file = self.input_layer.dataSourceUri()
+                            raster_in_file = self.input_layer.dataProvider().dataSourceUri()
                             if os.path.exists(raster_in_file):
-                                raster_out_file = os.path.join(raster_in_file.split(os.extsep)[0] + "_" + str(self.longitude_range) + raster_in_file.split(os.extsep)[1])
+                                raster_out_file = os.path.join(raster_in_file.split(os.extsep)[0] + "_" + str(self.longitude_range) + os.extsep + raster_in_file.split(os.extsep)[1])
                                 self.output_layer = process_raster_file(raster_in_file, self.longitude_range, raster_out_file)
                     else:
                         msg.setText("Input layer is not valid for some reason")

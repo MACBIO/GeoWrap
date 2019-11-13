@@ -22,6 +22,29 @@
      <property name="currentIndex">
       <number>0</number>
      </property>
+     <widget class="QWidget" name="layer_tab">
+      <attribute name="title">
+       <string>Layer</string>
+      </attribute>
+      <widget class="QGroupBox" name="groupBox">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>9</y>
+         <width>401</width>
+         <height>101</height>
+        </rect>
+       </property>
+       <property name="title">
+        <string>Layer to wrap</string>
+       </property>
+       <layout class="QVBoxLayout" name="verticalLayout_2">
+        <item>
+         <widget class="QgsMapLayerComboBox" name="layer_combobox"/>
+        </item>
+       </layout>
+      </widget>
+     </widget>
      <widget class="QWidget" name="file_tab">
       <attribute name="title">
        <string>File</string>
@@ -71,29 +94,6 @@
            <bool>true</bool>
           </property>
          </widget>
-        </item>
-       </layout>
-      </widget>
-     </widget>
-     <widget class="QWidget" name="layer_tab">
-      <attribute name="title">
-       <string>Layer</string>
-      </attribute>
-      <widget class="QGroupBox" name="groupBox">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>9</y>
-         <width>401</width>
-         <height>101</height>
-        </rect>
-       </property>
-       <property name="title">
-        <string>Layer to wrap</string>
-       </property>
-       <layout class="QVBoxLayout" name="verticalLayout_2">
-        <item>
-         <widget class="QgsMapLayerComboBox" name="layer_combobox"/>
         </item>
        </layout>
       </widget>
