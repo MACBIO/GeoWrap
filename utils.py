@@ -4,6 +4,14 @@ from osgeo import gdal, ogr
 
 def process_vector_layer(in_layer, longitude_range):
     import processing
+    from qgis.core import QgsProcessingException
+    from PyQt5.QtWidgets import QMessageBox
+    # set up an empty message box
+    msg = QMessageBox()
+    msg.setIcon(QMessageBox.Warning)
+    msg.setWindowTitle("Geometry Wrapper")
+    msg.setStandardButtons(QMessageBox.Ok)
+
     extent1 = None
     extent2 = None
     delta_x = None
@@ -25,7 +33,12 @@ def process_vector_layer(in_layer, longitude_range):
     params['EXTENT'] = extent1
     params['CLIP'] = True
     params['OUTPUT'] = 'memory:'
-    part1 = processing.run("native:extractbyextent", params)
+    try:
+        part1 = processing.run("native:extractbyextent", params)
+    except QgsProcessingException:
+        msg.setText("something went wrong with 'Extract/Clip by Extent' algorithm")
+        msg.exec_()
+        part1 = None
 
     # clip right side
     params = dict()
@@ -33,21 +46,34 @@ def process_vector_layer(in_layer, longitude_range):
     params['EXTENT'] = extent2
     params['CLIP'] = True
     params['OUTPUT'] = 'memory:'
-    part2 = processing.run("native:extractbyextent", params)
+    try:
+        part2 = processing.run("native:extractbyextent", params)
+    except QgsProcessingException:
+        msg.setText("something went wrong with 'Extract/Clip by Extent' algorithm")
+        msg.exec_()
+        part2 = None
 
     # do the wrapping part
     params = dict()
     params["INPUT"] = part1['OUTPUT']
     params['DELTA_X'] = int(delta_x)
     params['OUTPUT'] = 'memory:'
-    part1 = processing.run("native:translategeometry", params)
+    try:
+        part1 = processing.run("native:translategeometry", params)
+    except QgsProcessingException:
+        msg.setText("something went wrong with 'Extract/Clip by Extent' algorithm")
+        msg.exec_()
 
     # append part2 to part1
     params = dict()
     params['LAYERS'] = [part1['OUTPUT'], part2['OUTPUT']]
     params['OUTPUT'] = 'memory:'
-    output = processing.run("native:mergevectorlayers", params)
-
+    try:
+        output = processing.run("native:mergevectorlayers", params)
+    except QgsProcessingException:
+        msg.setText("something went wrong with 'Merge Vector Layers' algorithm")
+        msg.exec_()
+        output = None
     return output['OUTPUT']
 
 

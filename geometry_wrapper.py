@@ -35,7 +35,7 @@ try:
     from qgis.core import QgsMapLayerType
 except ImportError:
     from qgis.core import QgsMapLayer
-    QgsMapLayerType =  QgsMapLayer.LayerType
+    QgsMapLayerType = QgsMapLayer.LayerType
 
 
 class GeometryWrapper:
@@ -212,24 +212,22 @@ class GeometryWrapper:
                 self.selected_tab = "layer"
 
             if self.selected_tab == "file":
-                # get raster or vector file type
+                # process file
+
                 self.data_type = ''
                 file_name = self.input_dataset
                 file_info = QFileInfo(self.input_dataset)
-                base_name = file_info.baseName()
                 raster_layer = QgsRasterLayer(file_name)
                 vector_layer = QgsVectorLayer(file_name, "ogr")
                 if raster_layer.isValid():
                     self.data_type = 'raster'
                     if not raster_layer.crs().isGeographic():
-                        raster_layer = None
                         msg.setText("Input dataset must have geographic coordinate system (such as WGS84)")
                         msg.exec_()
                         self.run()
                 elif vector_layer.isValid():
                     self.data_type = 'vector'
                     if not vector_layer.crs().isGeographic():
-                        vector_layer = None
                         msg.setText("Input dataset must have geographic coordinate system (such as WGS84)")
                         msg.exec_()
                         self.run()
@@ -269,6 +267,8 @@ class GeometryWrapper:
                                 QgsProject.instance().addMapLayer(self.output_layer)
 
             elif self.selected_tab == "layer":
+                # process layer
+
                 self.input_layer = self.dlg.layer_combobox.currentLayer()
                 print(self.input_layer.name())
                 if self.input_layer.type() == QgsMapLayerType.VectorLayer:
