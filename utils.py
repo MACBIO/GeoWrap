@@ -51,61 +51,62 @@ def process_vector_layer(in_layer, longitude_range):
     return output['OUTPUT']
 
 
-def process_raster_layer(in_layer, longitude_range):
-    import processing
-    from qgis.core import QgsRasterLayer
-    part1 = '/vsimem/part1.tif'
-    part2 = '/vsimem/part2.tif'
-    merged = '/vsimem/merged.tif:'
-    projwin1 = None
-    a_ullr1 = None
-    projwin2 = None
-    a_ullr2 = None
-
-    if longitude_range == "180":
-        projwin1 = '-projwin=0|90|180|-90'
-        a_ullr1 = '-a_ullr=0|90|180|-90'
-        projwin2 = '-projwin=180|90|360|-90'
-        a_ullr2 = '-a_ullr=-180|90|0|-90'
-    elif longitude_range == "360":
-        projwin1 = '-projwin=-180|90|0|-90'
-        a_ullr1 = '-a_ullr=180|90|360|-90'
-        projwin2 = '-projwin=0|90|180|-90'
-        a_ullr2 = '-a_ullr=0|90|180|-90'
-    else:
-        print("something went wrong with the longitude range variable")
-
-    # clip left side
-    params = dict()
-    params['INPUT'] = in_layer
-    params['OPTIONS'] = [projwin1, a_ullr1]
-    params['OUTPUT'] = part1
-    output1 = processing.run("gdal:translate", params)
-    if os.path.exists(part1):
-        print("part1 exists")
-    else:
-        print("part1 missing")
-
-    # clip right side
-    params = dict()
-    params['INPUT'] = in_layer
-    params['OPTIONS'] = [projwin2, a_ullr2]
-    params['OUTPUT'] = part2
-    output2 = processing.run("gdal:translate", params)
-    if os.path.exists(part2):
-        print("part2 exists")
-    else:
-        print("part2 missing")
-
-    # merge part2 to part1
-    params = dict()
-    params['INPUT'] = [part1, part2]
-    params['OUTPUT'] = merged
-    output3 = processing.run("gdal:merge", params)
-
-    output_layer = QgsRasterLayer(merged)
-
-    return output_layer
+# def process_raster_layer(in_layer, longitude_range):
+#     # this function doesn't work; I can't figure out how to make an in-memory raster layer
+#     import processing
+#     from qgis.core import QgsRasterLayer
+#     part1 = '/vsimem/part1.tif'
+#     part2 = '/vsimem/part2.tif'
+#     merged = '/vsimem/merged.tif:'
+#     projwin1 = None
+#     a_ullr1 = None
+#     projwin2 = None
+#     a_ullr2 = None
+#
+#     if longitude_range == "180":
+#         projwin1 = '-projwin=0|90|180|-90'
+#         a_ullr1 = '-a_ullr=0|90|180|-90'
+#         projwin2 = '-projwin=180|90|360|-90'
+#         a_ullr2 = '-a_ullr=-180|90|0|-90'
+#     elif longitude_range == "360":
+#         projwin1 = '-projwin=-180|90|0|-90'
+#         a_ullr1 = '-a_ullr=180|90|360|-90'
+#         projwin2 = '-projwin=0|90|180|-90'
+#         a_ullr2 = '-a_ullr=0|90|180|-90'
+#     else:
+#         print("something went wrong with the longitude range variable")
+#
+#     # clip left side
+#     params = dict()
+#     params['INPUT'] = in_layer
+#     params['OPTIONS'] = [projwin1, a_ullr1]
+#     params['OUTPUT'] = part1
+#     output1 = processing.run("gdal:translate", params)
+#     if os.path.exists(part1):
+#         print("part1 exists")
+#     else:
+#         print("part1 missing")
+#
+#     # clip right side
+#     params = dict()
+#     params['INPUT'] = in_layer
+#     params['OPTIONS'] = [projwin2, a_ullr2]
+#     params['OUTPUT'] = part2
+#     output2 = processing.run("gdal:translate", params)
+#     if os.path.exists(part2):
+#         print("part2 exists")
+#     else:
+#         print("part2 missing")
+#
+#     # merge part2 to part1
+#     params = dict()
+#     params['INPUT'] = [part1, part2]
+#     params['OUTPUT'] = merged
+#     output3 = processing.run("gdal:merge", params)
+#
+#     output_layer = QgsRasterLayer(merged)
+#
+#     return output_layer
 
 
 def process_vector_file(in_file, longitude_range):
@@ -115,17 +116,19 @@ def process_vector_file(in_file, longitude_range):
 
 
 def process_raster_file(in_file, longitude_range, out_file):
+    from qgis.core import QgsRasterLayer
+    import subprocess
     projwin1 = None
     a_ullr1 = None
     projwin2 = None
     a_ullr2 = None
 
-    if longitude_range == 180:
+    if longitude_range == "180":
         projwin1 = '-projwin 0 90 180 -90'
         a_ullr1 = '-a_ullr 0 90 180 -90'
         projwin2 = '-projwin 180 90 360 -90'
         a_ullr2 = '-a_ullr -180 90 0 -90'
-    elif longitude_range == 360:
+    elif longitude_range == "360":
         projwin1 = '-projwin -180 90 0 -90'
         a_ullr1 = '-a_ullr 180 90 360 -90'
         projwin2 = '-projwin 0 90 180 -90'
@@ -136,17 +139,19 @@ def process_raster_file(in_file, longitude_range, out_file):
         # clip part 1
         args = ['gdal_translate', projwin1, a_ullr1, '"' + in_file + '"', '"' + part1 + '"']
         command = " ".join(args)
-        return_code, output = check_output(command, True)
+        subprocess.run(command)
         # clip part 2
         args = ['gdal_translate', projwin2, a_ullr2, '"' + in_file + '"', '"' + part2 + '"']
         command = " ".join(args)
-        return_code, output = check_output(command, True)
+        subprocess.run(command)
         # merge 2 parts together
         args = ['gdalwarp', '"' + part1 + '"', '"' + part2 + '"', '"' + out_file + '"']
         command = " ".join(args)
-        return_code, output = check_output(command, True)
+        subprocess.run(command)
 
     # delete temporary files
     for f in [part1, part2]:
         if os.path.exists(f):
             os.remove(f)
+
+    return QgsRasterLayer(out_file, baseName=os.path.basename(out_file))
