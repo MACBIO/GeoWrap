@@ -270,7 +270,6 @@ class GeometryWrapper:
                 # process layer
 
                 self.input_layer = self.dlg.layer_combobox.currentLayer()
-                print(self.input_layer.name())
                 if self.input_layer.type() == QgsMapLayerType.VectorLayer:
                     self.data_type = "vector"
                 elif self.input_layer.type() == QgsMapLayerType.RasterLayer:

@@ -1,20 +1,61 @@
 import os
-from osgeo import gdal, ogr
+from qgis.core import QgsProcessingFeedback
+from PyQt5.QtWidgets import QMessageBox
+
+
+class MyFeedBack(QgsProcessingFeedback):
+
+    def setProgressText(self, text):
+        msg = QMessageBox()
+        msg.setWindowTitle("Geometry Wrapper")
+        msg.setText(text)
+        msg.exec_()
+
+    def pushInfo(self, info):
+        msg = QMessageBox()
+        msg.setWindowTitle("Geometry Wrapper")
+        msg.setText(info)
+        msg.exec_()
+
+    def pushCommandInfo(self, info):
+        msg = QMessageBox()
+        msg.setWindowTitle("Geometry Wrapper")
+        msg.setText(info)
+        msg.exec_()
+
+    def pushDebugInfo(self, info):
+        msg = QMessageBox()
+        msg.setWindowTitle("Geometry Wrapper")
+        msg.setText(info)
+        msg.exec_()
+
+    def pushConsoleInfo(self, info):
+        msg = QMessageBox()
+        msg.setWindowTitle("Geometry Wrapper")
+        msg.setText(info)
+        msg.exec_()
+
+    def reportError(self, error, fatalError=False):
+        msg = QMessageBox()
+        msg.setWindowTitle("Geometry Wrapper")
+        msg.setText(error)
+        msg.exec_()
 
 
 def process_vector_layer(in_layer, longitude_range):
     import processing
     from qgis.core import QgsProcessingException
-    from PyQt5.QtWidgets import QMessageBox
+
+    # local variables
+    extent1 = None
+    extent2 = None
+    delta_x = None
+
     # set up an empty message box
     msg = QMessageBox()
     msg.setIcon(QMessageBox.Warning)
     msg.setWindowTitle("Geometry Wrapper")
     msg.setStandardButtons(QMessageBox.Ok)
-
-    extent1 = None
-    extent2 = None
-    delta_x = None
 
     if longitude_range == '360':
         extent1 = '-180, 0, -90, 90'
@@ -34,11 +75,9 @@ def process_vector_layer(in_layer, longitude_range):
     params['CLIP'] = True
     params['OUTPUT'] = 'memory:'
     try:
-        part1 = processing.run("native:extractbyextent", params)
+        part1 = processing.run("native:extractbyextent", params, feedback=MyFeedBack())
     except QgsProcessingException:
-        msg.setText("something went wrong with 'Extract/Clip by Extent' algorithm")
-        msg.exec_()
-        part1 = None
+        return None
 
     # clip right side
     params = dict()
@@ -49,9 +88,7 @@ def process_vector_layer(in_layer, longitude_range):
     try:
         part2 = processing.run("native:extractbyextent", params)
     except QgsProcessingException:
-        msg.setText("something went wrong with 'Extract/Clip by Extent' algorithm")
-        msg.exec_()
-        part2 = None
+        return None
 
     # do the wrapping part
     params = dict()
@@ -61,8 +98,7 @@ def process_vector_layer(in_layer, longitude_range):
     try:
         part1 = processing.run("native:translategeometry", params)
     except QgsProcessingException:
-        msg.setText("something went wrong with 'Extract/Clip by Extent' algorithm")
-        msg.exec_()
+        return None
 
     # append part2 to part1
     params = dict()
@@ -71,9 +107,8 @@ def process_vector_layer(in_layer, longitude_range):
     try:
         output = processing.run("native:mergevectorlayers", params)
     except QgsProcessingException:
-        msg.setText("something went wrong with 'Merge Vector Layers' algorithm")
-        msg.exec_()
-        output = None
+        return None
+
     return output['OUTPUT']
 
 
