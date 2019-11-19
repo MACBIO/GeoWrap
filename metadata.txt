@@ -10,7 +10,7 @@
 name=Geometry Wrapper
 qgisMinimumVersion=3.0
 description=Converts geometry longitude from [-180,180] to [0,360] and vice versa
-version=0.4
+version=0.45
 author=Jonah Sullivan
 email=jonahsullivan79@gmail.com
 
@@ -23,7 +23,7 @@ repository=https://github.com/MACBIO/GeoWrap
 # Recommended items:
 
 # Uncomment the following line and add your changelog:
-changelog=Added ability to process map layers or file(.shp or .tif)
+changelog=Using native algorithms for processing
 
 # Tags are comma separated with spaces allowed
 tags=geometry, vector, raster, shift

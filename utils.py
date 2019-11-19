@@ -6,40 +6,22 @@ from PyQt5.QtWidgets import QMessageBox
 class MyFeedBack(QgsProcessingFeedback):
 
     def setProgressText(self, text):
-        msg = QMessageBox()
-        msg.setWindowTitle("Geometry Wrapper")
-        msg.setText(text)
-        msg.exec_()
+        print(text)
 
     def pushInfo(self, info):
-        msg = QMessageBox()
-        msg.setWindowTitle("Geometry Wrapper")
-        msg.setText(info)
-        msg.exec_()
+        print(info)
 
     def pushCommandInfo(self, info):
-        msg = QMessageBox()
-        msg.setWindowTitle("Geometry Wrapper")
-        msg.setText(info)
-        msg.exec_()
+        print(info)
 
     def pushDebugInfo(self, info):
-        msg = QMessageBox()
-        msg.setWindowTitle("Geometry Wrapper")
-        msg.setText(info)
-        msg.exec_()
+        print(info)
 
     def pushConsoleInfo(self, info):
-        msg = QMessageBox()
-        msg.setWindowTitle("Geometry Wrapper")
-        msg.setText(info)
-        msg.exec_()
+        print(info)
 
     def reportError(self, error, fatalError=False):
-        msg = QMessageBox()
-        msg.setWindowTitle("Geometry Wrapper")
-        msg.setText(error)
-        msg.exec_()
+        print(error)
 
 
 def process_vector_layer(in_layer, longitude_range):
@@ -77,6 +59,10 @@ def process_vector_layer(in_layer, longitude_range):
     try:
         part1 = processing.run("native:extractbyextent", params, feedback=MyFeedBack())
     except QgsProcessingException:
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Warning)
+        msg.setWindowTitle("Geometry Wrapper Error")
+        msg.setText("Error: open python console to view error")
         return None
 
     # clip right side
@@ -88,6 +74,10 @@ def process_vector_layer(in_layer, longitude_range):
     try:
         part2 = processing.run("native:extractbyextent", params)
     except QgsProcessingException:
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Warning)
+        msg.setWindowTitle("Geometry Wrapper Error")
+        msg.setText("Error: open python console to view error")
         return None
 
     # do the wrapping part
@@ -98,6 +88,10 @@ def process_vector_layer(in_layer, longitude_range):
     try:
         part1 = processing.run("native:translategeometry", params)
     except QgsProcessingException:
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Warning)
+        msg.setWindowTitle("Geometry Wrapper Error")
+        msg.setText("Error: open python console to view error")
         return None
 
     # append part2 to part1
@@ -107,6 +101,10 @@ def process_vector_layer(in_layer, longitude_range):
     try:
         output = processing.run("native:mergevectorlayers", params)
     except QgsProcessingException:
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Warning)
+        msg.setWindowTitle("Geometry Wrapper Error")
+        msg.setText("Error: open python console to view error")
         return None
 
     return output['OUTPUT']
@@ -119,83 +117,102 @@ def process_vector_file(in_file, longitude_range):
 
 
 def process_raster_file(in_file, longitude_range, out_file):
+    import tempfile
     import processing
     from qgis.core import QgsRasterLayer
     from qgis.core import QgsProcessingException
 
-    # local variables
-    projwin1 = None
-    projwin2 = None
-    extent2_shift = None
+    # create a temporary folder for intermediate datasets
+    with tempfile.TemporaryDirectory() as temp_dir:
 
-    if longitude_range == "180":
-        projwin1 = '0, 180, -90, 90'  # comma delimited list of x min, x max, y min, y max.
-        projwin2 = '180, 360, -90, 90'
-        extent2_shift = ' -180, 0, -90, 90'
-    elif longitude_range == "360":
-        projwin1 = '0, 180, -90, 90'
-        projwin2 = '-180, 0, -90, 90'
-        extent2_shift = '180, 360, -90, 90'
-    part1_file = in_file.split(os.extsep)[0] + "_pt1.tif"
-    part2_file = in_file.split(os.extsep)[0] + "_pt2.tif"
-    part2_shift_file = in_file.split(os.extsep)[0] + "_pt2s.tif"
-    vrt_file = in_file.split(os.extsep)[0] + ".vrt"
-    if not os.path.exists(out_file):
+        # local variables
+        projwin1 = None
+        projwin2 = None
+        extent2_shift = None
 
-        # clip part 1
-        params = dict()
-        params['INPUT'] = in_file
-        params['PROJWIN'] = projwin1
-        params['OUTPUT'] = part1_file
-        try:
-            processing.run("gdal:cliprasterbyextent", params, feedback=MyFeedBack())
-        except QgsProcessingException:
-            return None
+        if longitude_range == "180":
+            projwin1 = '0, 180, -90, 90'  # comma delimited list of x min, x max, y min, y max.
+            projwin2 = '180, 360, -90, 90'
+            extent2_shift = ' -180, 0, -90, 90'
+        elif longitude_range == "360":
+            projwin1 = '0, 180, -90, 90'
+            projwin2 = '-180, 0, -90, 90'
+            extent2_shift = '180, 360, -90, 90'
+        part1_file = os.path.join(temp_dir, "pt1.tif")
+        part2_file = os.path.join(temp_dir, "pt2.tif")
+        part2_shift_file = os.path.join(temp_dir, "pt2s.tif")
+        vrt_file = os.path.join(temp_dir, "merge.vrt")
+        if not os.path.exists(out_file):
 
-        # clip part 2
-        params = dict()
-        params['INPUT'] = in_file
-        params['PROJWIN'] = projwin2
-        params['OUTPUT'] = part2_file
-        try:
-            processing.run("gdal:cliprasterbyextent", params, feedback=MyFeedBack())
-        except QgsProcessingException:
-            return None
+            # clip part 1
+            params = dict()
+            params['INPUT'] = in_file
+            params['PROJWIN'] = projwin1
+            params['OUTPUT'] = part1_file
+            try:
+                processing.run("gdal:cliprasterbyextent", params, feedback=MyFeedBack())
+            except QgsProcessingException:
+                msg = QMessageBox()
+                msg.setIcon(QMessageBox.Warning)
+                msg.setWindowTitle("Geometry Wrapper Error")
+                msg.setText("Error: open python console to view error")
+                return None
 
-        # move part 2
-        params = dict()
-        params['INPUT'] = part2_file
-        params['TARGET_CRS'] = part2_file
-        params['TARGET_EXTENT'] = extent2_shift
-        params['TARGET_EXTENT_CRS'] = 'EPSG:4326'
-        params['OUTPUT'] = part2_shift_file
-        try:
-            processing.run("gdal:warpreproject", params, feedback=MyFeedBack())
-        except QgsProcessingException:
-            return None
+            # clip part 2
+            params = dict()
+            params['INPUT'] = in_file
+            params['PROJWIN'] = projwin2
+            params['OUTPUT'] = part2_file
+            try:
+                processing.run("gdal:cliprasterbyextent", params, feedback=MyFeedBack())
+            except QgsProcessingException:
+                msg = QMessageBox()
+                msg.setIcon(QMessageBox.Warning)
+                msg.setWindowTitle("Geometry Wrapper Error")
+                msg.setText("Error: open python console to view error")
+                return None
 
-        # make virtual raster with both parts
-        params = dict()
-        params['INPUT'] = [part1_file, part2_shift_file]
-        params['SEPARATE'] = False
-        params['OUTPUT'] = vrt_file
-        try:
-            processing.run("gdal:buildvirtualraster", params, feedback=MyFeedBack())
-        except QgsProcessingException:
-            return None
+            # move part 2
+            params = dict()
+            params['INPUT'] = part2_file
+            params['TARGET_CRS'] = part2_file
+            params['TARGET_EXTENT'] = extent2_shift
+            params['TARGET_EXTENT_CRS'] = 'EPSG:4326'
+            params['OUTPUT'] = part2_shift_file
+            try:
+                processing.run("gdal:warpreproject", params, feedback=MyFeedBack())
+            except QgsProcessingException:
+                msg = QMessageBox()
+                msg.setIcon(QMessageBox.Warning)
+                msg.setWindowTitle("Geometry Wrapper Error")
+                msg.setText("Error: open python console to view error")
+                return None
 
-        # make write virtual raster to tif
-        params = dict()
-        params['INPUT'] = vrt_file
-        params['OUTPUT'] = out_file
-        try:
-            processing.run("gdal:translate", params, feedback=MyFeedBack())
-        except QgsProcessingException:
-            return None
+            # make virtual raster with both parts
+            params = dict()
+            params['INPUT'] = [part1_file, part2_shift_file]
+            params['SEPARATE'] = False
+            params['OUTPUT'] = vrt_file
+            try:
+                processing.run("gdal:buildvirtualraster", params, feedback=MyFeedBack())
+            except QgsProcessingException:
+                msg = QMessageBox()
+                msg.setIcon(QMessageBox.Warning)
+                msg.setWindowTitle("Geometry Wrapper Error")
+                msg.setText("Error: open python console to view error")
+                return None
 
-    # delete temporary files
-    for f in [part1_file, part2_file, part2_shift_file, vrt_file]:
-        if os.path.exists(f):
-            os.remove(f)
+            # make write virtual raster to tif
+            params = dict()
+            params['INPUT'] = vrt_file
+            params['OUTPUT'] = out_file
+            try:
+                processing.run("gdal:translate", params, feedback=MyFeedBack())
+            except QgsProcessingException:
+                msg = QMessageBox()
+                msg.setIcon(QMessageBox.Warning)
+                msg.setWindowTitle("Geometry Wrapper Error")
+                msg.setText("Error: open python console to view error")
+                return None
 
     return QgsRasterLayer(out_file, baseName=os.path.basename(out_file))
