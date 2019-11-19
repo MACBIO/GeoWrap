@@ -112,64 +112,6 @@ def process_vector_layer(in_layer, longitude_range):
     return output['OUTPUT']
 
 
-# def process_raster_layer(in_layer, longitude_range):
-#     # this function doesn't work; I can't figure out how to make an in-memory raster layer
-#     import processing
-#     from qgis.core import QgsRasterLayer
-#     part1 = '/vsimem/part1.tif'
-#     part2 = '/vsimem/part2.tif'
-#     merged = '/vsimem/merged.tif:'
-#     projwin1 = None
-#     a_ullr1 = None
-#     projwin2 = None
-#     a_ullr2 = None
-#
-#     if longitude_range == "180":
-#         projwin1 = '-projwin=0|90|180|-90'
-#         a_ullr1 = '-a_ullr=0|90|180|-90'
-#         projwin2 = '-projwin=180|90|360|-90'
-#         a_ullr2 = '-a_ullr=-180|90|0|-90'
-#     elif longitude_range == "360":
-#         projwin1 = '-projwin=-180|90|0|-90'
-#         a_ullr1 = '-a_ullr=180|90|360|-90'
-#         projwin2 = '-projwin=0|90|180|-90'
-#         a_ullr2 = '-a_ullr=0|90|180|-90'
-#     else:
-#         print("something went wrong with the longitude range variable")
-#
-#     # clip left side
-#     params = dict()
-#     params['INPUT'] = in_layer
-#     params['OPTIONS'] = [projwin1, a_ullr1]
-#     params['OUTPUT'] = part1
-#     output1 = processing.run("gdal:translate", params)
-#     if os.path.exists(part1):
-#         print("part1 exists")
-#     else:
-#         print("part1 missing")
-#
-#     # clip right side
-#     params = dict()
-#     params['INPUT'] = in_layer
-#     params['OPTIONS'] = [projwin2, a_ullr2]
-#     params['OUTPUT'] = part2
-#     output2 = processing.run("gdal:translate", params)
-#     if os.path.exists(part2):
-#         print("part2 exists")
-#     else:
-#         print("part2 missing")
-#
-#     # merge part2 to part1
-#     params = dict()
-#     params['INPUT'] = [part1, part2]
-#     params['OUTPUT'] = merged
-#     output3 = processing.run("gdal:merge", params)
-#
-#     output_layer = QgsRasterLayer(merged)
-#
-#     return output_layer
-
-
 def process_vector_file(in_file, longitude_range):
     from qgis.core import QgsVectorLayer
     vector_layer = QgsVectorLayer(in_file)
@@ -177,41 +119,82 @@ def process_vector_file(in_file, longitude_range):
 
 
 def process_raster_file(in_file, longitude_range, out_file):
+    import processing
     from qgis.core import QgsRasterLayer
-    import subprocess
+    from qgis.core import QgsProcessingException
+
+    # local variables
     projwin1 = None
-    a_ullr1 = None
     projwin2 = None
-    a_ullr2 = None
+    extent2_shift = None
 
     if longitude_range == "180":
-        projwin1 = '-projwin 0 90 180 -90'
-        a_ullr1 = '-a_ullr 0 90 180 -90'
-        projwin2 = '-projwin 180 90 360 -90'
-        a_ullr2 = '-a_ullr -180 90 0 -90'
+        projwin1 = '0, 180, -90, 90'  # comma delimited list of x min, x max, y min, y max.
+        projwin2 = '180, 360, -90, 90'
+        extent2_shift = ' -180, 0, -90, 90'
     elif longitude_range == "360":
-        projwin1 = '-projwin -180 90 0 -90'
-        a_ullr1 = '-a_ullr 180 90 360 -90'
-        projwin2 = '-projwin 0 90 180 -90'
-        a_ullr2 = '-a_ullr 0 90 180 -90'
-    part1 = in_file.split(os.extsep)[0] + "_pt1.tif"
-    part2 = in_file.split(os.extsep)[0] + "_pt2.tif"
+        projwin1 = '0, 180, -90, 90'
+        projwin2 = '-180, 0, -90, 90'
+        extent2_shift = '180, 360, -90, 90'
+    part1_file = in_file.split(os.extsep)[0] + "_pt1.tif"
+    part2_file = in_file.split(os.extsep)[0] + "_pt2.tif"
+    part2_shift_file = in_file.split(os.extsep)[0] + "_pt2s.tif"
+    vrt_file = in_file.split(os.extsep)[0] + ".vrt"
     if not os.path.exists(out_file):
+
         # clip part 1
-        args = ['gdal_translate', projwin1, a_ullr1, '"' + in_file + '"', '"' + part1 + '"']
-        command = " ".join(args)
-        subprocess.run(command)
+        params = dict()
+        params['INPUT'] = in_file
+        params['PROJWIN'] = projwin1
+        params['OUTPUT'] = part1_file
+        try:
+            processing.run("gdal:cliprasterbyextent", params, feedback=MyFeedBack())
+        except QgsProcessingException:
+            return None
+
         # clip part 2
-        args = ['gdal_translate', projwin2, a_ullr2, '"' + in_file + '"', '"' + part2 + '"']
-        command = " ".join(args)
-        subprocess.run(command)
-        # merge 2 parts together
-        args = ['gdalwarp', '"' + part1 + '"', '"' + part2 + '"', '"' + out_file + '"']
-        command = " ".join(args)
-        subprocess.run(command)
+        params = dict()
+        params['INPUT'] = in_file
+        params['PROJWIN'] = projwin2
+        params['OUTPUT'] = part2_file
+        try:
+            processing.run("gdal:cliprasterbyextent", params, feedback=MyFeedBack())
+        except QgsProcessingException:
+            return None
+
+        # move part 2
+        params = dict()
+        params['INPUT'] = part2_file
+        params['TARGET_CRS'] = part2_file
+        params['TARGET_EXTENT'] = extent2_shift
+        params['TARGET_EXTENT_CRS'] = 'EPSG:4326'
+        params['OUTPUT'] = part2_shift_file
+        try:
+            processing.run("gdal:warpreproject", params, feedback=MyFeedBack())
+        except QgsProcessingException:
+            return None
+
+        # make virtual raster with both parts
+        params = dict()
+        params['INPUT'] = [part1_file, part2_shift_file]
+        params['SEPARATE'] = False
+        params['OUTPUT'] = vrt_file
+        try:
+            processing.run("gdal:buildvirtualraster", params, feedback=MyFeedBack())
+        except QgsProcessingException:
+            return None
+
+        # make write virtual raster to tif
+        params = dict()
+        params['INPUT'] = vrt_file
+        params['OUTPUT'] = out_file
+        try:
+            processing.run("gdal:translate", params, feedback=MyFeedBack())
+        except QgsProcessingException:
+            return None
 
     # delete temporary files
-    for f in [part1, part2]:
+    for f in [part1_file, part2_file, part2_shift_file, vrt_file]:
         if os.path.exists(f):
             os.remove(f)
 
